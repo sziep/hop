@@ -1,0 +1,12 @@
+[colors]
+selected_bg = "#316168"
+selected_fg = "#aaedf5"
+label       = "#66D9E8"
+path        = "#7e7e7e"
+filter      = "#FD971F"
+filter_dim  = "#75715E"
+border      = "#316168"
+preview     = "#96b0bd"
+header      = "#FD971F"
+hint        = "#5b6c81"
+status      = "#A6E22E"
