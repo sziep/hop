@@ -87,6 +87,7 @@ type model struct {
 	browserFilter     string
 	browserCursor     int
 	browserFocusEntry string // re-focus cursor on this entry when dirEntriesMsg arrives
+	showHidden        bool
 
 	// shared state
 	previewLines []string
@@ -147,9 +148,9 @@ func (m model) applyBrowserFilter() []string {
 }
 
 // fetchDirPreview returns a clean list of navigable subdirectories for the preview pane.
-func fetchDirPreview(path string) tea.Cmd {
+func fetchDirPreview(path string, showHidden bool) tea.Cmd {
 	return func() tea.Msg {
-		dirs := readSubdirs(path)
+		dirs := readSubdirs(path, showHidden)
 		if len(dirs) == 0 {
 			return previewMsg("(no subdirectories)")
 		}
@@ -161,14 +162,14 @@ func fetchDirPreview(path string) tea.Cmd {
 	}
 }
 
-func loadDirEntries(path string) tea.Cmd {
+func loadDirEntries(path string, showHidden bool) tea.Cmd {
 	return func() tea.Msg {
-		entries := readSubdirs(path)
+		entries := readSubdirs(path, showHidden)
 		return dirEntriesMsg{path: path, entries: entries}
 	}
 }
 
-func readSubdirs(path string) []string {
+func readSubdirs(path string, showHidden bool) []string {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil
@@ -179,7 +180,7 @@ func readSubdirs(path string) []string {
 			continue
 		}
 		name := e.Name()
-		if strings.HasPrefix(name, ".") {
+		if !showHidden && strings.HasPrefix(name, ".") {
 			continue
 		}
 		dirs = append(dirs, name)
@@ -201,7 +202,7 @@ func newModel(s tuiStyles, storeRef *store, cwd string) model {
 
 func (m model) Init() tea.Cmd {
 	if len(m.filtered) > 0 {
-		return fetchDirPreview(m.filtered[0].Path)
+		return fetchDirPreview(m.filtered[0].Path, m.showHidden)
 	}
 	return nil
 }
@@ -211,7 +212,7 @@ func (m model) moveCursor(delta int) (model, tea.Cmd) {
 		return m, nil
 	}
 	m.cursor = (m.cursor + delta + len(m.filtered)) % len(m.filtered)
-	return m, fetchDirPreview(m.filtered[m.cursor].Path)
+	return m, fetchDirPreview(m.filtered[m.cursor].Path, m.showHidden)
 }
 
 func (m model) moveBrowserCursor(delta int) model {
@@ -236,7 +237,7 @@ func (m model) enterBrowser(path string) (model, tea.Cmd) {
 	m.browserEntries = nil
 	m.browserFiltered = nil
 	m.browserFilter = ""
-	return m, loadDirEntries(path)
+	return m, loadDirEntries(path, m.showHidden)
 }
 
 // refreshBookmarks rebuilds all/filtered from the store and clamps cursor.
@@ -248,7 +249,7 @@ func (m model) refreshBookmarks() (model, tea.Cmd) {
 		m.cursor = max(0, len(m.filtered)-1)
 	}
 	if len(m.filtered) > 0 {
-		return m, fetchDirPreview(m.filtered[m.cursor].Path)
+		return m, fetchDirPreview(m.filtered[m.cursor].Path, m.showHidden)
 	}
 	return m, nil
 }
@@ -320,9 +321,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.browserFocusEntry = ""
 			}
 			if len(m.browserFiltered) > 0 {
-				return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]))
+				return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]), m.showHidden)
 			}
-			return m, fetchDirPreview(m.browserPath)
+			return m, fetchDirPreview(m.browserPath, m.showHidden)
 		}
 		return m, nil
 
@@ -353,7 +354,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.browserEntries = nil
 				var cmd tea.Cmd
 				if len(m.filtered) > 0 {
-					cmd = fetchDirPreview(m.filtered[m.cursor].Path)
+					cmd = fetchDirPreview(m.filtered[m.cursor].Path, m.showHidden)
 				}
 				return m, cmd
 			}
@@ -372,7 +373,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.mode == modeBrowser {
 				m = m.moveBrowserCursor(-1)
 				if len(m.browserFiltered) > 0 {
-					return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]))
+					return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]), m.showHidden)
 				}
 				return m, nil
 			}
@@ -382,7 +383,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.mode == modeBrowser {
 				m = m.moveBrowserCursor(1)
 				if len(m.browserFiltered) > 0 {
-					return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]))
+					return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]), m.showHidden)
 				}
 				return m, nil
 			}
@@ -424,7 +425,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.browserCursor = max(0, len(m.browserFiltered)-1)
 					}
 					if len(m.browserFiltered) > 0 {
-						return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]))
+						return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[m.browserCursor]), m.showHidden)
 					}
 				}
 				return m, nil
@@ -437,13 +438,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.cursor = max(0, len(m.filtered)-1)
 				}
 				if len(m.filtered) > 0 {
-					return m, fetchDirPreview(m.filtered[m.cursor].Path)
+					return m, fetchDirPreview(m.filtered[m.cursor].Path, m.showHidden)
 				}
 			}
 			return m, nil
 
 		case tea.KeyRunes:
 			if m.mode == modeBrowser {
+				if len(msg.Runes) == 1 && msg.Runes[0] == '.' && m.browserFilter == "" {
+					m.showHidden = !m.showHidden
+					m.browserEntries = nil
+					m.browserFiltered = nil
+					m.browserCursor = 0
+					return m, loadDirEntries(m.browserPath, m.showHidden)
+				}
 				for _, r := range msg.Runes {
 					if unicode.IsPrint(r) {
 						m.browserFilter += string(r)
@@ -452,7 +460,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.browserFiltered = m.applyBrowserFilter()
 				m.browserCursor = 0
 				if len(m.browserFiltered) > 0 {
-					return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[0]))
+					return m, fetchDirPreview(filepath.Join(m.browserPath, m.browserFiltered[0]), m.showHidden)
 				}
 				return m, nil
 			}
@@ -464,7 +472,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filtered = m.applyFilter()
 			m.cursor = 0
 			if len(m.filtered) > 0 {
-				return m, fetchDirPreview(m.filtered[m.cursor].Path)
+				return m, fetchDirPreview(m.filtered[m.cursor].Path, m.showHidden)
 			}
 			return m, nil
 		}
@@ -623,7 +631,7 @@ func (m model) viewBrowser() string {
 	if m.browserFilter != "" {
 		bottomLine = m.styles.filter.Render("  /" + m.browserFilter + "█")
 	} else {
-		bottomLine = m.statusOrHint("[esc] back  [↵] select  [^a] add  [^d] del")
+		bottomLine = m.statusOrHint("[esc] back  [↵] select  [^a] add  [.] hidden")
 	}
 
 	header := m.styles.header.Render("  " + truncatePath(m.browserPath, d.listWidth-2))
