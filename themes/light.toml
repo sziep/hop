@@ -1,0 +1,17 @@
+# hop light theme (light backgrounds)
+[colors]
+selected_bg = "#d0e8ec"
+selected_fg = "#0b4f5a"
+label       = "#0b7285"
+path        = "#868e96"
+filter      = "#d9480f"
+filter_dim  = "#adb5bd"
+border      = "#99c5cc"
+preview     = "#495057"
+preview_dim = "#adb5bd"
+header      = "#d9480f"
+hint        = "#868e96"
+status      = "#2b8a3e"
+match       = "#d9480f"
+dead        = "#c92a2a"
+git         = "#2b8a3e"

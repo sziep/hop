@@ -1,3 +1,4 @@
+# hop default theme (dark backgrounds)
 [colors]
 selected_bg = "#316168"
 selected_fg = "#aaedf5"
@@ -7,6 +8,10 @@ filter      = "#FD971F"
 filter_dim  = "#75715E"
 border      = "#316168"
 preview     = "#96b0bd"
+preview_dim = "#5b6c81"
 header      = "#FD971F"
 hint        = "#5b6c81"
 status      = "#A6E22E"
+match       = "#FD971F"
+dead        = "#F92672"
+git         = "#A6E22E"

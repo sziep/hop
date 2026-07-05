@@ -1,0 +1,17 @@
+# hop dracula theme
+[colors]
+selected_bg = "#44475a"
+selected_fg = "#f8f8f2"
+label       = "#8be9fd"
+path        = "#6272a4"
+filter      = "#ffb86c"
+filter_dim  = "#6272a4"
+border      = "#bd93f9"
+preview     = "#f8f8f2"
+preview_dim = "#6272a4"
+header      = "#ff79c6"
+hint        = "#6272a4"
+status      = "#50fa7b"
+match       = "#ffb86c"
+dead        = "#ff5555"
+git         = "#50fa7b"

@@ -1,0 +1,17 @@
+# hop nord theme
+[colors]
+selected_bg = "#434c5e"
+selected_fg = "#eceff4"
+label       = "#88c0d0"
+path        = "#616e88"
+filter      = "#ebcb8b"
+filter_dim  = "#4c566a"
+border      = "#5e81ac"
+preview     = "#d8dee9"
+preview_dim = "#4c566a"
+header      = "#ebcb8b"
+hint        = "#4c566a"
+status      = "#a3be8c"
+match       = "#ebcb8b"
+dead        = "#bf616a"
+git         = "#a3be8c"
